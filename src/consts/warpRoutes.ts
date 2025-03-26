@@ -61,7 +61,7 @@ export const warpRouteConfigs: WarpCoreConfig = {
         ),
         destination: ['arbitrumsepolia', 'decaftestnet'].join(NETWORK_SEPARATOR),
         addressOrDenom: zeroAddress,
-      },
+      }
     ],
   },
 };

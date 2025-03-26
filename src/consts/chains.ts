@@ -22,6 +22,7 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
   // },
   arbitrumsepolia: {
     ...arbitrumsepolia,
+    mailbox: "0x598facE78a4302f11E3de0bee1894Da0b2Cb71F8",
     rpcUrls: [{ http: `https://arb-sepolia.g.alchemy.com/v2/vwDTCZX0XZnU6flxj8YzYZuMaOKI3EX9` }]
   },
   decaftestnet: {
