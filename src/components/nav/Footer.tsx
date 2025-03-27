@@ -1,11 +1,10 @@
-import Image from 'next/image';
 import Link from 'next/link';
 import { ReactNode } from 'react';
 
 import { GithubIcon } from '@hyperlane-xyz/widgets';
+import { BookText } from 'lucide-react';
 
 import { links } from '../../consts/links';
-import Logo from '../../images/logos/app-logo.svg';
 
 type FooterLink = {
   title: string;
@@ -15,11 +14,12 @@ type FooterLink = {
 };
 
 const footerLinks: FooterLink[] = [
-  { title: 'Docs', url: links.docs, external: true },
-  { title: 'Support', url: links.support, external: true },
-  { title: 'Homepage', url: links.home, external: true },
-  { title: 'Explorer', url: links.explorer, external: true },
-  { title: 'Github', url: links.github, external: true, icon: <GithubIcon color="#fff" /> },
+  { title: 'Home', url: "/", external: false },
+  { title: 'Generate', url: "/generate", external: false },
+  { title: 'Bridge', url: "/bridge", external: false },
+  { title: 'Dashboard', url: "/dashboard", external: false },
+  { title: 'Docs', url: links.github, external: true, icon: <BookText color="#fff" className='w-5 h-5' /> },
+  { title: 'Github', url: links.github, external: true, icon: <GithubIcon color="#fff" className='w-5 h-5' /> },
 ];
 
 export function Footer() {
@@ -38,8 +38,8 @@ export function Footer() {
 function FooterLogo() {
   return (
     <div className="flex items-center justify-center">
-      <div className="ml-2 h-12 w-12 sm:h-14 sm:w-14">
-        <Image src={Logo} height={58} alt="" />
+      <div className="ml-2 h-8 sm:h-10 flex flex-row gap-2 items-center">
+        <p>Built in</p><p className='text-orange-400 font-semibold'>Espresso Network</p>
       </div>
       <div className="ml-6 space-y-1 text-lg font-medium sm:text-xl"></div>
     </div>
@@ -48,9 +48,9 @@ function FooterLogo() {
 
 function FooterNav() {
   return (
-    <nav className="text-md font-medium">
+    <nav className="text-md font-medium pb-1">
       <ul
-        style={{ gridTemplateColumns: 'auto auto auto auto auto' }}
+        style={{ gridTemplateColumns: 'auto auto auto auto auto auto' }}
         className="grid gap-x-7 gap-y-1.5"
       >
         {footerLinks.map((item) => (

@@ -55,8 +55,8 @@ const styles = {
   container: {
     backgroundColor: BACKGROUND_COLOR,
     backgroundImage: BACKGROUND_IMAGE,
-    backgroundSize: 'auto',
-    backgroundRepeat: 'repeat',
-    backgroundPosition: 'center',
+    backgroundSize: 'cover',
+    backgroundRepeat: 'no-repeat',
+    backgroundPosition: 'center'
   },
 };

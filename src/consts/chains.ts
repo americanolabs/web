@@ -29,6 +29,7 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
     protocol: ProtocolType.Ethereum,
     chainId: 12177,
     domainId: 12177,
+    logoURI: "/decaf.svg",
     nativeToken: { name: 'Ether', symbol: 'ETH', decimals: 18 },
     name: 'decaftestnet',
     displayName: 'Decaf Testnet',
