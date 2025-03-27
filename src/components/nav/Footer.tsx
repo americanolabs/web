@@ -38,7 +38,7 @@ export function Footer() {
 function FooterLogo() {
   return (
     <div className="flex items-center justify-center">
-      <div className="ml-2 h-8 sm:h-10 flex flex-row gap-2 items-center">
+      <div className="ml-2 h-8 sm:h-10 flex flex-wrap gap-2 items-center">
         <p>Built in</p><p className='text-orange-400 font-semibold'>Espresso Network</p>
       </div>
       <div className="ml-6 space-y-1 text-lg font-medium sm:text-xl"></div>

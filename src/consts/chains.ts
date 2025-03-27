@@ -1,4 +1,4 @@
-import { arbitrumsepolia } from '@hyperlane-xyz/registry';
+import { arbitrumsepolia, basesepolia } from '@hyperlane-xyz/registry';
 import { ChainMap, ChainMetadata } from '@hyperlane-xyz/sdk';
 import { ProtocolType } from '@hyperlane-xyz/utils';
 
@@ -25,6 +25,11 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
     mailbox: "0x598facE78a4302f11E3de0bee1894Da0b2Cb71F8",
     rpcUrls: [{ http: `https://arb-sepolia.g.alchemy.com/v2/vwDTCZX0XZnU6flxj8YzYZuMaOKI3EX9` }]
   },
+  basesepolia: {
+    ...basesepolia,
+    mailbox: "0x6966b0E55883d49BFB24539356a2f8A673E02039",
+    rpcUrls: [{ http: `https://base-sepolia.g.alchemy.com/v2/vwDTCZX0XZnU6flxj8YzYZuMaOKI3EX9` }]
+  },
   decaftestnet: {
     protocol: ProtocolType.Ethereum,
     chainId: 12177,
@@ -39,7 +44,7 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
     }],
     gasCurrencyCoinGeckoId: "ethereum",
     index: {
-      "from": 20
+      "from": 0
     },
     isTestnet: true,
   }

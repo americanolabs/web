@@ -22,7 +22,7 @@ import { Color } from '../../../styles/Color';
 import { useMultiProvider } from '../../chains/hooks';
 import { useWarpCore } from '../../tokens/hooks';
 
-function initWagmi(multiProvider: MultiProtocolProvider) {
+export function initWagmi(multiProvider: MultiProtocolProvider) {
   const chains = getWagmiChainConfigs(multiProvider);
 
   const connectors = connectorsForWallets(
