@@ -1,60 +1,76 @@
+import { logger } from '@/utils/logger';
 import React from 'react';
+
+interface StorageItem {
+  value: string;
+  timestamp: number;
+}
 
 const useGenerateContent = () => {
   const [risk, setRisk] = React.useState<string | null>(null);
   const [riskSaved, setRiskSaved] = React.useState<string | null>(null);
-  const [protocolId, setProtocolId] = React.useState<string | null>(null);
-  const [protocolIdSaved, setProtocolIdSaved] = React.useState<string | null>(null);
+  const [idProtocol, setIdProtocol] = React.useState<string | null>(null);
+  const [idProtocolSaved, setIdProtocolSaved] = React.useState<string | null>(null);
 
   const setItemWithExpiry = (key: string, value: string) => {
-    localStorage.setItem(key, value);
+    const item: StorageItem = {
+      value,
+      timestamp: new Date().getTime()
+    };
+    localStorage.setItem(key, JSON.stringify(item));
   };
 
-  const getItemWithExpiry = (key: string) => {
+  const getItemWithExpiry = (key: string): string | null => {
     const itemStr = localStorage.getItem(key);
     if (!itemStr) return null;
 
-    const item = JSON.parse(itemStr);
-    const now = new Date().getTime();
-    const tenMinutes = 10 * 60 * 1000;
+    try {
+      const item: StorageItem = JSON.parse(itemStr);
+      const now = new Date().getTime();
+      const tenMinutes = 10 * 60 * 1000;
 
-    if (now - item.timestamp > tenMinutes) {
+      if (now - item.timestamp > tenMinutes) {
+        localStorage.removeItem(key);
+        return null;
+      }
+      return item.value;
+    } catch (error) {
+      logger.error(`Error parsing localStorage item for key ${key}:`, error);
       localStorage.removeItem(key);
       return null;
     }
-    return item.value;
   };
 
   React.useEffect(() => {
     if (risk) {
-      setItemWithExpiry("risk", JSON.stringify(risk));
+      setItemWithExpiry("risk", risk);
     }
     
-    if (protocolId) {
-      setItemWithExpiry("protocolId", JSON.stringify(protocolId));
+    if (idProtocol && idProtocol.trim() !== '') {
+      setItemWithExpiry("idProtocol", idProtocol);
     }
-
-    const cleanup = setInterval(() => {
-      getItemWithExpiry("risk");
-      getItemWithExpiry("protocolId");
-    }, 60000);
-
-    return () => clearInterval(cleanup);
-  }, [risk, protocolId]);
+  }, [risk, idProtocol]);
 
   React.useEffect(() => {
-    const risk = localStorage.getItem("risk");
-    if (risk) {
-      setRiskSaved(risk);
+    const savedRisk = getItemWithExpiry("risk");
+    if (savedRisk) {
+      setRiskSaved(savedRisk);
     }
 
-    const protocolId = localStorage.getItem("protocolId");
-    if (protocolId) {
-      setProtocolIdSaved(protocolId);
+    const savedIdProtocol = getItemWithExpiry("idProtocol");
+    if (savedIdProtocol) {
+      setIdProtocolSaved(savedIdProtocol);
     }
   }, []);
 
-  return { risk, setRisk, protocolId, setProtocolId, riskSaved, protocolIdSaved };
+  return { 
+    risk, 
+    setRisk, 
+    idProtocol, 
+    setIdProtocol, 
+    riskSaved, 
+    idProtocolSaved 
+  };
 };
 
 export default useGenerateContent;

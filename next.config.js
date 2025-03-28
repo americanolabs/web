@@ -11,7 +11,7 @@ const isDev = process.env.NODE_ENV !== 'production'
 const ENABLE_CSP_HEADER = true;
 const FRAME_SRC_HOSTS = ['https://*.walletconnect.com', 'https://*.walletconnect.org','https://*.solflare.com'];
 const STYLE_SRC_HOSTS = []
-const IMG_SRC_HOSTS = ['https://*.walletconnect.com', 'https://*.githubusercontent.com'];
+const IMG_SRC_HOSTS = ['https://*.walletconnect.com', 'https://*.githubusercontent.com', 's2.coinmarketcap.com'];
 const cspHeader = `
   default-src 'self';
   script-src 'self'${isDev ? " 'unsafe-eval'" : ''};
@@ -59,6 +59,16 @@ const securityHeaders = [
 const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
+  },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 's2.coinmarketcap.com',
+        port: '',
+        pathname: '/**',
+      },
+    ],
   },
   webpack(config, { isServer }) {
     config.module.rules.push({

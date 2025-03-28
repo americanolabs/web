@@ -1,6 +1,5 @@
 import { MockStakingABI } from "@/lib/abis/MockStakingABI";
-import { useReadContract } from "wagmi";
-import { useAddressAI } from "./useAddressAI";
+import { useAccount, useReadContract } from "wagmi";
 import { z } from "zod";
 import { normalize } from "@/lib/bignumber";
 import { DECIMALS_MOCK_TOKEN } from "@/lib/constants";
@@ -19,13 +18,13 @@ export const useCurStaking = ({
 }: {
   addressProtocol: HexAddress;
 }) => {
-  const { addressAI } = useAddressAI();
+  const { address } = useAccount();
 
   const { data, isLoading: csLoading }: { data: [bigint, bigint, bigint, boolean] | undefined, isLoading: boolean } = useReadContract({
     address: addressProtocol,
     abi: MockStakingABI,
     functionName: "stakes",
-    args: [addressAI],
+    args: [address],
   });
 
   const formattedData = data

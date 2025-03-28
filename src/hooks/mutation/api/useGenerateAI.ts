@@ -1,162 +1,91 @@
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import apiAgent from "@/lib/api-agent";
-import { ADDRESS_AVS } from "@/lib/constants";
-import { AVSAbi } from "@/lib/abis/AVSAbi";
-import { useAccount } from "wagmi";
-import { useStaking } from "@/hooks/query/useStaking";
 import useGenerateContent from "@/hooks/query/api/useGeneratedContent";
-import { writeContract } from "wagmi/actions";
 import { logger } from "@/utils/logger";
-import { useWagmiConfig } from "@/features/wallet/context/config";
 
 export const dataClassify = [
   {
-    "risk": "low",
-    "prompt": "I have $1000 to invest, give me one best investment plan based on the agent's APY knowledge base with stable coin highest APY. Use this json format for output = {\"id_project\":\"id_project\"}. Do not add any characters that are not included in the format!"
+    risk: "low",
+    prompt: "I have $1000 to invest, give me one best investment plan based on the agent's APY knowledge base with stable coin highest APY. Use this json format for output = {\"id_project\":\"id_project\"}. Do not add any characters that are not included in the format!"
   },
   {
-    "risk": "medium",
-    "prompt": "I have $1000 to invest, give me one best investment plan based on the agent's APY knowledge base on project stable coin or project with between token BTC, ETH, SOL and BNB. Use this format for output = {\"id_project\":\"id_project\"}. Do not add any characters that are not included in the format!"
+    risk: "medium",
+    prompt: "I have $1000 to invest, give me one best investment plan based on the agent's APY knowledge base on project stable coin or project with between token BTC, ETH, SOL and BNB. Use this format for output = {\"id_project\":\"id_project\"}. Do not add any characters that are not included in the format!"
   },
   {
-    "risk": "high",
-    "prompt": "I have $1000 to invest, give me one best investment plan based on the agent's APY knowledge base with highest APY. Use this json format for output = {\"id_project\":\"id_project\"}. Do not add any characters that are not included in the format!"
+    risk: "high",
+    prompt: "I have $1000 to invest, give me one best investment plan based on the agent's APY knowledge base with highest APY. Use this json format for output = {\"id_project\":\"id_project\"}. Do not add any characters that are not included in the format!"
   }
-]
+] as const;
 
 type Status = "idle" | "loading" | "success" | "error";
 
+interface StepStatus {
+  step: number;
+  status: Status;
+  error?: string;
+}
+
 export const useGenerateAI = () => {
-  const { address } = useAccount()
-  const { sData } = useStaking();
-  const wagmiConfig = useWagmiConfig();
+  const { setRisk, setIdProtocol, idProtocolSaved, riskSaved } = useGenerateContent();
 
-  const { risk, setRisk, protocolId, setProtocolId } = useGenerateContent();
-
-  const [steps, setSteps] = useState<
-    Array<{
-      step: number;
-      status: Status;
-      error?: string;
-    }>
-  >([
-    {
-      step: 1,
-      status: "idle",
-    },
-    {
-      step: 2,
-      status: "idle",
-    }
+  const [steps, setSteps] = useState<StepStatus[]>([
+    { step: 1, status: "idle" },
+    { step: 2, status: "idle" }
   ]);
 
+  const updateStepStatus = (stepNumber: number, status: Status, error?: string) => {
+    setSteps(prev =>
+      prev.map(step =>
+        step.step === stepNumber
+          ? { ...step, status, ...(error ? { error } : {}) }
+          : step
+      )
+    );
+  };
+
   const mutation = useMutation({
-    mutationFn: async ({
-      formattedSubmission
-    }: {
-      formattedSubmission: string;
-    }) => {
+    mutationFn: async ({ formattedSubmission }: { formattedSubmission: string }) => {
       try {
-        setSteps([{ step: 1, status: "idle" }]);
+        updateStepStatus(1, "idle");
 
-        setSteps((prev) =>
-          prev.map((item) => {
-            if (item.step === 1) {
-              return { ...item, status: "loading" };
-            }
-            return item;
-          })
-        );
-
-        const response = await apiAgent.post("generate-risk-profile", { data: formattedSubmission, "user_address": address });
-        setRisk(response.risk);
-
-        setSteps((prev) =>
-          prev.map((item) => {
-            if (item.step === 1) {
-              return { ...item, status: "success" };
-            }
-            return item;
-          })
-        );
+        updateStepStatus(1, "loading");
+        const riskResponse = await apiAgent.post("generate-risk-profile", { data: formattedSubmission });
+        setRisk(riskResponse.risk);
+        updateStepStatus(1, "success");
 
         const matchingClassification = dataClassify.find(
-          (item) => item.risk === response.risk);
-
-        setSteps((prev) =>
-          prev.map((item) => {
-            if (item.step === 2) {
-              return { ...item, status: "loading" };
-            }
-            return item;
-          })
+          (item) => item.risk === riskResponse.risk
         );
 
         if (matchingClassification) {
-          const response = await apiAgent.post("query", { query: matchingClassification.prompt });
-
-          let findStaking = sData?.find((item) => {
-            return item.idProtocol?.trim() === response.response[0]?.id_project.replace(/"/g, "")
+          updateStepStatus(2, "loading");
+          const protocolResponse = await apiAgent.post("generate-protocol", {
+            query: matchingClassification.prompt
           });
 
-          if (!findStaking) {
-            findStaking = sData?.find((item) => {
-              return item.nameToken?.trim() === response.response[0]?.id_project.replace(/"/g, "")
-            })
-          }
-
-          if (response.response[0]?.id_project) {
-            try {
-              const txHash = await writeContract(wagmiConfig, {
-                // to: ADDRESS_AVS,
-                // data: encodeFunctionData({
-                //   abi: AVSAbi,
-                //   functionName: "taskAgent",
-                //   args: [findStaking?.idProtocol]
-                // }),
-                // account: address as HexAddress,
-                address: ADDRESS_AVS,
-                abi: AVSAbi,
-                functionName: "taskAgent",
-                args: [findStaking?.idProtocol],
-              });
-
-              if (txHash) {
-                setProtocolId(response.response[0]?.id_project);
-              }
-            } catch (contractError) {
-              logger.error("Contract interaction failed:", contractError);
-              throw new Error(`Contract execution failed: ${(contractError as Error).message}`);
-            }
-          }
+          setIdProtocol(protocolResponse.response?.id_project);
+          updateStepStatus(2, "success");
         }
 
-        setSteps((prev) =>
-          prev.map((item) => {
-            if (item.step === 2) {
-              return { ...item, status: "success" };
-            }
-            return item;
-          })
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+
+        setSteps(prev =>
+          prev.map(step =>
+            step.status === "loading"
+              ? { ...step, status: "error", error: errorMessage }
+              : step
+          )
         );
 
-      } catch (e) {
-        logger.error("Error", e);
+        logger.error("Error in AI generation", error);
 
-        setSteps((prev) =>
-          prev.map((step) => {
-            if (step.status === "loading") {
-              return { ...step, status: "error", error: (e as Error).message };
-            }
-            return step;
-          })
-        );
-
-        throw e;
+        throw error;
       }
     },
   });
 
-  return { steps, mutation, risk, protocolId };
+  return { steps, mutation, riskSaved, idProtocolSaved };
 };
