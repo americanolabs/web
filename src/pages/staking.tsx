@@ -236,7 +236,7 @@ const Staking: NextPage = () => {
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-              <Button size="sm" className="text-xs sm:text-sm">Stake Now</Button>
+              <Button size="sm" className="text-xs sm:text-sm" onClick={() => setOpen(true)}>Stake Now</Button>
             </CardFooter>
           </Card>
         )) : (
