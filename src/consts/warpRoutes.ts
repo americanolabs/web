@@ -82,50 +82,10 @@ export const warpRouteConfigs: WarpCoreConfig = {
     interchainFeeConstants: [
       {
         amount: 1e10,
-        origin: ['arbitrumsepolia'].join(
+        origin: ['arbitrumsepolia', 'basesepolia', 'decaftestnet'].join(
           NETWORK_SEPARATOR,
         ),
-        destination: ['basesepolia'].join(NETWORK_SEPARATOR),
-        addressOrDenom: zeroAddress,
-      },
-      {
-        amount: 1e10,
-        origin: ['arbitrumsepolia'].join(
-          NETWORK_SEPARATOR,
-        ),
-        destination: ['decaftestnet'].join(NETWORK_SEPARATOR),
-        addressOrDenom: zeroAddress,
-      },
-      {
-        amount: 1e10,
-        origin: ['basesepolia'].join(
-          NETWORK_SEPARATOR,
-        ),
-        destination: ['arbitrumsepolia'].join(NETWORK_SEPARATOR),
-        addressOrDenom: zeroAddress,
-      },
-      {
-        amount: 1e10,
-        origin: ['basesepolia'].join(
-          NETWORK_SEPARATOR,
-        ),
-        destination: ['decaftestnet'].join(NETWORK_SEPARATOR),
-        addressOrDenom: zeroAddress,
-      },
-      {
-        amount: 1e10,
-        origin: ['decaftestnet'].join(
-          NETWORK_SEPARATOR,
-        ),
-        destination: ['arbitrumsepolia'].join(NETWORK_SEPARATOR),
-        addressOrDenom: zeroAddress,
-      },
-      {
-        amount: 1e10,
-        origin: ['decaftestnet'].join(
-          NETWORK_SEPARATOR,
-        ),
-        destination: ['basesepolia'].join(NETWORK_SEPARATOR),
+        destination: ['basesepolia', 'basesepolia', 'decaftestnet'].join(NETWORK_SEPARATOR),
         addressOrDenom: zeroAddress,
       }
     ],
