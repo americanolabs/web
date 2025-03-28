@@ -38,7 +38,7 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
     displayName: 'Decaf Testnet',
     mailbox: "0xD95d2F7C38bfA2f9d7A618474Bc619470f01001F",
     rpcUrls: [{
-      http: 'https://rollup-v1.optifi-agent.xyz'
+      http: 'https://americano-rollup-v1.comingdotsoon.xyz'
     }],
     gasCurrencyCoinGeckoId: "ethereum",
     index: {
