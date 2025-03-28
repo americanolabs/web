@@ -22,11 +22,11 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
   // },
   arbitrumsepolia: {
     ...arbitrumsepolia,
-    rpcUrls: [{ http: 'https://arb-sepolia.g.alchemy.com/v2/EB6qgZ7mRkqjUt7xoI_d3V_AjZuUkFpg' }],
+    rpcUrls: [{ http: 'https://sepolia-rollup.arbitrum.io/rpc' }],
   },
   basesepolia: {
     ...basesepolia,
-    rpcUrls: [{ http: 'https://base-sepolia.g.alchemy.com/v2/EB6qgZ7mRkqjUt7xoI_d3V_AjZuUkFpg' }],
+    rpcUrls: [{ http: 'https://sepolia.base.org' }],
   },
   decaftestnet: {
     protocol: ProtocolType.Ethereum,

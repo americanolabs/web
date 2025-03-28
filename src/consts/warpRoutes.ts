@@ -1,7 +1,7 @@
 import { TokenStandard, type WarpCoreConfig } from '@hyperlane-xyz/sdk';
 import { zeroAddress } from 'viem';
 
-const ROUTER = '0xAb68849dA49Ae79e9aDD0F28ABBA73DF16A7af79';
+const ROUTER = '0xD22A20bD7A2E2f174E69ac053e546a48aC98d2Bd';
 
 const NETWORK_SEPARATOR = '101010';
 
