@@ -34,6 +34,12 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useStaking } from '@/hooks/query/useStaking';
 
+const chainLogos = [
+  { name: 'Arbitrum Sepolia', logo: '/chains/arbitrum-logo.png' },
+  { name: 'Base Sepolia', logo: '/chains/base-logo.png' },
+  { name: 'Decaf Testnet', logo: '/chains/decaf-logo.png' },
+]
+
 const Staking: NextPage = () => {
   const [search, setSearch] = useState('');
   const [chainFilter, setChainFilter] = useState('all');
@@ -136,13 +142,28 @@ const Staking: NextPage = () => {
         {filteredAndSortedProtocols && filteredAndSortedProtocols.map(protocol => (
           <Card key={protocol.idProtocol} className="hover:shadow-lg transition-shadow">
             <CardHeader className="flex flex-row items-center space-x-4 pb-2">
-              <div className="relative h-12 w-12">
-                <Image
-                  src={protocol.logo}
-                  alt={`${protocol.nameProject} logo`}
-                  fill
-                  className="object-contain"
-                />
+              <div className="relative">
+                <div className="absolute z-0">
+                  <div className="relative h-12 w-12">
+                    {chainLogos[protocol.chain] && (
+                      <Image
+                        src={chainLogos[protocol.chain]}
+                        alt={`${protocol.chain} logo`}
+                        fill
+                        className="object-contain" />
+                    )}
+                  </div>
+                </div>
+                <div className='absolute z-10 left-2'>
+                  <div className="relative h-12 w-12">
+                    <Image
+                      src={protocol.logo}
+                      alt={`${protocol.nameProject} logo`}
+                      fill
+                      className="object-contain"
+                    />
+                  </div>
+                </div>
               </div>
               <div>
                 <CardTitle>{protocol.nameProject}</CardTitle>
