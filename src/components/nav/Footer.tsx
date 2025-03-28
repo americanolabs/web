@@ -17,6 +17,7 @@ const footerLinks: FooterLink[] = [
   { title: 'Home', url: "/", external: false },
   { title: 'Generate', url: "/generate", external: false },
   { title: 'Bridge', url: "/bridge", external: false },
+  { title: 'Staking', url: "/staking", external: false },
   { title: 'Dashboard', url: "/dashboard", external: false },
   { title: 'Docs', url: links.github, external: true, icon: <BookText color="#fff" className='w-5 h-5' /> },
   { title: 'Github', url: links.github, external: true, icon: <GithubIcon color="#fff" className='w-5 h-5' /> },
@@ -50,8 +51,8 @@ function FooterNav() {
   return (
     <nav className="text-md font-medium pb-1">
       <ul
-        style={{ gridTemplateColumns: 'auto auto auto auto auto auto' }}
-        className="grid gap-x-7 gap-y-1.5"
+        style={{ gridTemplateColumns: 'auto auto auto auto auto auto auto' }}
+        className="grid gap-x-5 gap-y-1.5"
       >
         {footerLinks.map((item) => (
           <li key={item.title}>
@@ -60,7 +61,7 @@ function FooterNav() {
               target={item.external ? '_blank' : '_self'}
               href={item.url}
             >
-              {item?.icon && <div className="mr-3 mt-1 w-4">{item?.icon}</div>}
+              {item?.icon && <div className="mr-1 mt-1 w-4">{item?.icon}</div>}
               {!item?.icon && <div>{item.title}</div>}
             </Link>
           </li>

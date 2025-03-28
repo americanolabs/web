@@ -1,9 +1,9 @@
+import { useWagmiConfig } from "@/features/wallet/context/config";
 import { MockStakingABI } from "@/lib/abis/MockStakingABI";
 import { denormalize, valueToBigInt } from "@/lib/bignumber";
-import { config } from "@/lib/wagmi";
+import { logger } from "@/utils/logger";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
-import { erc20Abi } from "viem";
 import { useAccount } from "wagmi";
 import {
   waitForTransactionReceipt,
@@ -14,6 +14,7 @@ type Status = "idle" | "loading" | "success" | "error";
 
 export const useStake = () => {
   const { address: userAddress } = useAccount();
+  const wagmiConfig = useWagmiConfig();
 
   const [steps, setSteps] = useState<
     Array<{
@@ -32,15 +33,11 @@ export const useStake = () => {
 
   const mutation = useMutation({
     mutationFn: async ({
-      days,
-      addressSpender,
-      addressToken,
+      addressStaking,
       amount,
       decimals
     }: {
-      days: string;
-      addressSpender: HexAddress;
-      addressToken: HexAddress;
+      addressStaking: HexAddress;
       amount: string;
       decimals: number;
     }) => {
@@ -63,42 +60,32 @@ export const useStake = () => {
           })
         );
 
-        const approveHash = await writeContract(config, {
-          address: addressToken,
-          abi: erc20Abi,
-          functionName: "approve",
-          args: [
-            addressSpender,
-            valueToBigInt(dAmount + 10),
-          ],
-        });
+        // const approveHash = await writeContract(wagmiConfig, {
+        //   address: addressToken,
+        //   abi: erc20Abi,
+        //   functionName: "approve",
+        //   args: [
+        //     addressStaking,
+        //     valueToBigInt(dAmount + 10),
+        //   ],
+        // });
 
-        await waitForTransactionReceipt(config, {
-          hash: approveHash,
-        });
+        // await waitForTransactionReceipt(wagmiConfig, {
+        //   hash: approveHash,
+        // });
 
-        setSteps((prev) =>
-          prev.map((item) => {
-            if (item.step === 1) {
-              return { ...item, status: "success" };
-            }
-            return item;
-          })
-        );
-
-        const txHash = await writeContract(config, {
-          address: addressSpender,
+        const txHash = await writeContract(wagmiConfig, {
+          address: addressStaking,
           abi: MockStakingABI,
           functionName: "stake",
           args: [
-            days,
-            dAmount,
+            valueToBigInt(dAmount),
           ],
         });
 
         setTxHash(txHash);
 
-        const result = await waitForTransactionReceipt(config, {
+        const result = await waitForTransactionReceipt(wagmiConfig, {
           hash: txHash,
         });
 
@@ -113,7 +100,7 @@ export const useStake = () => {
 
         return result;
       } catch (e) {
-        console.error("Bid Error", e);
+        logger.error("Error", e);
 
         setSteps((prev) =>
           prev.map((step) => {

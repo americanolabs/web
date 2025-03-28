@@ -1,7 +1,7 @@
 import { normalize } from '@/lib/bignumber'
 import { useAccount, useBalance } from 'wagmi'
 
-export const useAccountBalance = ({ token = "0x1", decimal = 6 }: { token: HexAddress, decimal: number }) => {
+export const useAccountBalance = ({ token = "0x0000000000000000000000000000000000000000", decimal = 18 }: { token?: HexAddress, decimal?: number }) => {
   const { address } = useAccount()
 
   const { data: result, isLoading: bLoading, error: bError, refetch: bRefetch } = useBalance({

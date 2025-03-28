@@ -2,13 +2,8 @@ export const MockStakingABI = [
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "_mockUNI",
-        "type": "address"
-      },
-      {
         "internalType": "uint8",
-        "name": "_fixedAPY",
+        "name": "_apy",
         "type": "uint8"
       },
       {
@@ -20,10 +15,20 @@ export const MockStakingABI = [
         "internalType": "uint256",
         "name": "_maxAmountStaked",
         "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "_tokenAddress",
+        "type": "address"
       }
     ],
     "stateMutability": "nonpayable",
     "type": "constructor"
+  },
+  {
+    "inputs": [],
+    "name": "ReentrancyGuardReentrantCall",
+    "type": "error"
   },
   {
     "anonymous": false,
@@ -50,7 +55,7 @@ export const MockStakingABI = [
       {
         "indexed": true,
         "internalType": "address",
-        "name": "withdrawer",
+        "name": "staker",
         "type": "address"
       },
       {
@@ -60,7 +65,7 @@ export const MockStakingABI = [
         "type": "uint256"
       }
     ],
-    "name": "EmergencyWithdraw",
+    "name": "EmergencyWithdrawn",
     "type": "event"
   },
   {
@@ -81,7 +86,7 @@ export const MockStakingABI = [
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "durationInDays",
+        "name": "duration",
         "type": "uint256"
       }
     ],
@@ -94,7 +99,7 @@ export const MockStakingABI = [
       {
         "indexed": true,
         "internalType": "address",
-        "name": "withdrawer",
+        "name": "staker",
         "type": "address"
       },
       {
@@ -108,26 +113,26 @@ export const MockStakingABI = [
     "type": "event"
   },
   {
-    "inputs": [],
-    "name": "durationInDays",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
+    "anonymous": false,
     "inputs": [
       {
+        "indexed": true,
+        "internalType": "address",
+        "name": "staker",
+        "type": "address"
+      },
+      {
+        "indexed": false,
         "internalType": "uint256",
-        "name": "_amount",
+        "name": "amount",
         "type": "uint256"
       }
     ],
+    "name": "Withdrawn",
+    "type": "event"
+  },
+  {
+    "inputs": [],
     "name": "emergencyWithdraw",
     "outputs": [],
     "stateMutability": "nonpayable",
@@ -147,38 +152,6 @@ export const MockStakingABI = [
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_user",
-        "type": "address"
-      }
-    ],
-    "name": "getAmountStakeByUser",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "getMyStakedAmount",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [],
     "name": "maxAmountStaked",
     "outputs": [
@@ -186,19 +159,6 @@ export const MockStakingABI = [
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "mockUNI",
-    "outputs": [
-      {
-        "internalType": "contract IERC20",
-        "name": "",
-        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -220,24 +180,6 @@ export const MockStakingABI = [
   {
     "inputs": [
       {
-        "internalType": "uint8",
-        "name": "_newAPY",
-        "type": "uint8"
-      }
-    ],
-    "name": "setAPY",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_days",
-        "type": "uint256"
-      },
-      {
         "internalType": "uint256",
         "name": "_amount",
         "type": "uint256"
@@ -245,7 +187,7 @@ export const MockStakingABI = [
     ],
     "name": "stake",
     "outputs": [],
-    "stateMutability": "nonpayable",
+    "stateMutability": "payable",
     "type": "function"
   },
   {
@@ -260,23 +202,18 @@ export const MockStakingABI = [
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "amountStaked",
+        "name": "amount",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "numberOfDays",
+        "name": "startTime",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "registrationTimestamp",
+        "name": "duration",
         "type": "uint256"
-      },
-      {
-        "internalType": "bool",
-        "name": "isValid",
-        "type": "bool"
       }
     ],
     "stateMutability": "view",
@@ -284,12 +221,25 @@ export const MockStakingABI = [
   },
   {
     "inputs": [],
-    "name": "startStake",
+    "name": "stakingDuration",
     "outputs": [
       {
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "tokenAddress",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -309,6 +259,19 @@ export const MockStakingABI = [
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "uint8",
+        "name": "_newAPY",
+        "type": "uint8"
+      }
+    ],
+    "name": "updateAPY",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "withdraw",
     "outputs": [],
@@ -317,13 +280,9 @@ export const MockStakingABI = [
   },
   {
     "inputs": [],
-    "name": "withdrawToOwner",
+    "name": "withdrawAll",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
-  },
-  {
-    "stateMutability": "payable",
-    "type": "receive"
   }
 ]
