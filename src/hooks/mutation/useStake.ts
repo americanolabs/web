@@ -60,20 +60,6 @@ export const useStake = () => {
           })
         );
 
-        // const approveHash = await writeContract(wagmiConfig, {
-        //   address: addressToken,
-        //   abi: erc20Abi,
-        //   functionName: "approve",
-        //   args: [
-        //     addressStaking,
-        //     valueToBigInt(dAmount + 10),
-        //   ],
-        // });
-
-        // await waitForTransactionReceipt(wagmiConfig, {
-        //   hash: approveHash,
-        // });
-
         const txHash = await writeContract(wagmiConfig, {
           address: addressStaking,
           abi: MockStakingABI,
