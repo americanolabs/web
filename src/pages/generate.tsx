@@ -29,7 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useToast } from '@chakra-ui/react';
-import { Info, LoaderCircle, RefreshCw } from "lucide-react"
+import { Info, LoaderCircle, RefreshCcw, RefreshCw } from "lucide-react"
 import { useGenerateAI } from "@/hooks/mutation/api/useGenerateAI"
 import { useStaking } from "@/hooks/query/useStaking"
 import { Staking } from "@/types/staking"
@@ -37,7 +37,10 @@ import { Separator } from "@/components/ui/separator"
 import Image from "next/image"
 import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import DialogStake from "@/components/dialog/dialog-stake"
+import { useStake } from "@/hooks/mutation/useStake"
+import { useBalance } from "@/hooks/query/useBalance"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
 
 const chainLogos = [
   { name: 'Arbitrum Sepolia', logo: '/chains/arbitrum-logo.png' },
@@ -105,7 +108,6 @@ const riskProfileQuestions = [
 
 const Generate: NextPage = () => {
   const toast = useToast();
-  const [open, setOpen] = useState(false)
 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { mutation, riskSaved, idProtocolSaved } = useGenerateAI()
@@ -162,14 +164,63 @@ const Generate: NextPage = () => {
 
   const staking = sData && idProtocolSaved && sData.find((item) => item.idProtocol === idProtocolSaved) as Staking
 
+  const [amount, setAmount] = useState("");
+  const { mutation: stakeMutation } = useStake();
+  const { balance, loading, error, refresh } = useBalance({
+    chainName: typeof staking === "object" && staking !== null ? staking.chain : undefined
+  });
+
+
+  const handleStake = async () => {
+    if (!amount || Number(amount) <= 0 || balance === null || balance < amount) {
+      toast({
+        title: "Invalid Amount",
+        description: "Please enter a valid amount to stake.",
+        status: "error"
+      });
+      return;
+    }
+
+    try {
+      await stakeMutation.mutateAsync(
+        {
+          addressStaking: typeof staking === "object" && staking !== null && staking.addressStaking?.startsWith("0x") ? staking.addressStaking as `0x${string}` : (() => { throw new Error("Invalid addressStaking value") })(),
+          amount: amount,
+          chain: staking.chain,
+          decimals: 18
+        },
+        {
+          onSuccess: () => {
+            toast({
+              title: "Staking Successful",
+              description: `You have staked ${amount} ETH on ${staking.chain}.`,
+              status: "success"
+            });
+
+            setTimeout(() => {
+              refresh();
+            }, 2000);
+          },
+          onError: (error) => {
+            toast({
+              title: "Staking Error",
+              description: `Error: ${error.message}`,
+              status: "error"
+            });
+          }
+        }
+      );
+    } catch (error) {
+      toast({
+        title: "Staking Error",
+        description: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        status: "error"
+      });
+    }
+  };
+
   return (
     <React.Fragment>
-      <DialogStake
-        open={open} 
-        onClose={() => setOpen(false)} 
-        addressStaking={typeof staking === "object" ? staking?.addressStaking : ""}
-        chain={typeof staking === "object" ? staking?.chain : ""}
-      />
       <div className="container mx-auto max-w-2xl py-10 px-4">
         {!idProtocolSaved ? (
           <Card>
@@ -251,11 +302,11 @@ const Generate: NextPage = () => {
               <CardFooter className="flex justify-center">
                 <Button variant="outline" className="flex items-center gap-2" onClick={handleReset}>
                   <RefreshCw className="h-4 w-4" />
-                  Regenrate
+                  Regenerate
                 </Button>
               </CardFooter>
             </Card>
-            {staking && (
+            {staking ? (
               <Card
                 className="hover:shadow-lg transition-shadow flex flex-col min-w-[230px]"
               >
@@ -319,21 +370,58 @@ const Generate: NextPage = () => {
                     ))}
                   </div>
                 </CardContent>
-                <CardFooter className="flex justify-between">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button variant="outline" size="sm" className="text-xs sm:text-sm">
-                          <Info className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" /> Details
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>View Protocol Details</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                  <Button size="sm" className="text-xs sm:text-sm" onClick={() => setOpen(true)}>Stake Now</Button>
+                <CardFooter className='flex flex-col gap-3'>
+                  <div className="w-full flex justify-between items-center">
+                    <Label className="block">
+                      Balance: {loading ? "Loading..." : error ? "Error loading balance" : balance ? `${parseFloat(balance).toFixed(6)} ETH` : "0 ETH"}
+                    </Label>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={refresh}
+                      disabled={loading}
+                    >
+                      <RefreshCcw className='w-5 h-5' />
+                    </Button>
+                  </div>
+                  <Input
+                    id="amount"
+                    type="number"
+                    placeholder="0.00"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    className="mt-1"
+                  />
+                  <div className="flex w-full justify-between">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="outline" size="sm" className="text-xs sm:text-sm">
+                            <Info className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" /> Details
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>View Protocol Details</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    <Button size="sm" className="text-xs sm:text-sm" onClick={handleStake} disabled={!balance || balance < amount}>
+                      Stake Now
+                    </Button>
+                  </div>
+                  <Label>
+                    Note: If you dont have enough balance, you can bridge or claim faucets first.
+                  </Label>
                 </CardFooter>
+              </Card>
+            ) : (
+              <Card className="mt-6 p-4 shadow-lg rounded-2xl">
+                <CardHeader className="text-center">
+                  <CardTitle>Staking Protocol Not Found</CardTitle>
+                  <CardDescription className="max-w-[400px]">
+                    The selected staking protocol could not be found. Please regenerate again.
+                  </CardDescription>
+                </CardHeader>
               </Card>
             )}
           </>

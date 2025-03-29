@@ -1,4 +1,4 @@
-export const MockStakingABI = [
+export const StakingABI = [
   {
     "inputs": [
       {
@@ -285,4 +285,4 @@ export const MockStakingABI = [
     "stateMutability": "nonpayable",
     "type": "function"
   }
-]
+] as const;

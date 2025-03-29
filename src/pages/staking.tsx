@@ -230,6 +230,7 @@ const StakingCard = ({ protocol, getLogoUrl }) => {
         {
           addressStaking: protocol.addressStaking,
           amount: amount,
+          chain: protocol.chain,
           decimals: 18
         },
         {
@@ -364,6 +365,9 @@ const StakingCard = ({ protocol, getLogoUrl }) => {
             Stake Now
           </Button>
         </div>
+        <Label>
+          Note: If you dont have enough balance, you can bridge or claim faucets first.
+        </Label>
       </CardFooter>
     </Card>
   );

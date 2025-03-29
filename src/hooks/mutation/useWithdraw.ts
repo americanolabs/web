@@ -1,4 +1,4 @@
-import { MockStakingABI } from "@/lib/abis/MockStakingABI";
+import { StakingABI } from "@/lib/abis/StakingABI";
 import { denormalize } from "@/lib/bignumber";
 import { config } from "@/lib/wagmi";
 import { useMutation } from "@tanstack/react-query";
@@ -62,7 +62,7 @@ export const useBid = () => {
 
         const txHash = await writeContract(config, {
           address: addressStaking,
-          abi: MockStakingABI,
+          abi: StakingABI,
           functionName: "stake",
           args: [
             days,

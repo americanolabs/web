@@ -1,4 +1,4 @@
-import { MockStakingABI } from "@/lib/abis/MockStakingABI";
+import { MockStakingABI } from "@/lib/abis/StakingABI";
 import { useAccount, useReadContract } from "wagmi";
 import { z } from "zod";
 import { normalize } from "@/lib/bignumber";
