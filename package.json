@@ -104,7 +104,7 @@
   "private": true,
   "repository": {
     "type": "git",
-    "url": "https://github.com/hyperlane-xyz/hyperlane-warp-ui-template"
+    "url": "https://github.com/americanolabs/overview"
   },
   "scripts": {
     "clean": "rm -rf dist cache .next",
