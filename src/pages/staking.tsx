@@ -216,7 +216,8 @@ const StakingCard = ({ protocol, getLogoUrl }) => {
     chainName: protocol.chain
   });
   const { cStaking } = useCurStaking({
-    addressProtocol: protocol.addressStaking
+    addressProtocol: protocol.addressStaking,
+    chain: protocol.chain
   });
   const { mutation: withdrawMutation } = useWithdraw();
 
@@ -248,6 +249,7 @@ const StakingCard = ({ protocol, getLogoUrl }) => {
 
             setTimeout(() => {
               refresh();
+              window.location.reload();
             }, 2000);
           },
           onError: (error) => {
@@ -291,6 +293,9 @@ const StakingCard = ({ protocol, getLogoUrl }) => {
               status: "success"
             });
             refresh();
+            setTimeout(() => {
+              window.location.reload();
+            }, 2000);
           },
           onError: (error) => {
             toast({
