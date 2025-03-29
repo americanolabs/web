@@ -2,14 +2,13 @@ import type { NextPage } from 'next';
 import { useState, useMemo } from 'react';
 import Image from 'next/image';
 import {
-  ArrowUpDown,
-  Search,
   Info,
   Filter,
-  X
+  ChevronUp,
+  ChevronDown,
+  RefreshCcw
 } from 'lucide-react';
 
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -19,13 +18,6 @@ import {
   CardFooter,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Tooltip,
   TooltipContent,
@@ -38,10 +30,17 @@ import {
   Sheet,
   SheetContent,
   SheetHeader,
-  SheetTitle
+  SheetTitle,
+  SheetFooter
 } from "@/components/ui/sheet";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useStaking } from '@/hooks/query/useStaking';
-import DialogStake from '@/components/dialog/dialog-stake';
+import { useBalance } from '@/hooks/query/useBalance';
+import { Label } from '@/components/ui/label';
+import { FilterSection } from '@/components/filter/filter-staking';
+import { useStake } from '@/hooks/mutation/useStake';
+import { useToast } from '@chakra-ui/react';
+import { Input } from '@/components/ui/input';
 
 const chainLogos = [
   { name: 'Arbitrum Sepolia', logo: '/chains/arbitrum-logo.png' },
@@ -54,14 +53,15 @@ const Staking: NextPage = () => {
   const [chainFilter, setChainFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [sortBy, setSortBy] = useState<'apy' | 'tvl'>('apy');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [open, setOpen] = useState(false)
 
-  const { sData } = useStaking();
+  const { sData, sLoading: isLoading } = useStaking();
 
   const filteredAndSortedProtocols = useMemo(() => {
-    return sData && sData
+    if (!sData) return [];
+
+    return sData
       .filter(protocol =>
         (search === '' ||
           protocol.nameProject.toLowerCase().includes(search.toLowerCase()) ||
@@ -71,20 +71,37 @@ const Staking: NextPage = () => {
         (categoryFilter === 'all' || protocol.categories.includes(categoryFilter))
       )
       .sort((a, b) => {
-        const modifier = sortOrder === 'desc' ? 1 : -1;
+        const modifier = sortOrder === 'desc' ? -1 : 1;
         return modifier * (a[sortBy] - b[sortBy]);
       });
   }, [search, chainFilter, categoryFilter, sortBy, sortOrder, sData]);
 
-  const availableChains = [...new Set(sData && sData.map(p => p.chain))];
-  const availableCategories = [...new Set(sData && sData.flatMap(p => p.categories))];
+  const availableChains = useMemo(() =>
+    [...new Set(sData?.map(p => p.chain) || [])],
+    [sData]
+  );
+
+  const availableCategories = useMemo(() =>
+    [...new Set(sData?.flatMap(p => p.categories) || [])],
+    [sData]
+  );
 
   const clearFilters = () => {
     setSearch('');
     setChainFilter('all');
     setCategoryFilter('all');
     setSortBy('apy');
-    setSortOrder('asc');
+    setSortOrder('desc');
+  };
+
+  const renderSortIcon = () => {
+    return sortOrder === 'desc' ?
+      <ChevronDown className="h-4 w-4" /> :
+      <ChevronUp className="h-4 w-4" />;
+  };
+
+  const getLogoUrl = (chain) => {
+    return chainLogos.find(c => c.name === chain)?.logo || '/default-logo.png';
   };
 
   return (
@@ -99,7 +116,13 @@ const Staking: NextPage = () => {
             onClick={() => setIsFilterOpen(true)}
             className="flex items-center gap-2 text-black"
           >
-            <Filter className="h-4 w-4 text-black" /> Filters
+            <Filter className="h-4 w-4 text-black" />
+            Filters
+            {(search || chainFilter !== 'all' || categoryFilter !== 'all') && (
+              <Badge variant="default" className="ml-2 h-5 w-5 p-0 flex items-center justify-center">
+                !
+              </Badge>
+            )}
           </Button>
         </div>
 
@@ -118,6 +141,7 @@ const Staking: NextPage = () => {
             availableChains={availableChains}
             availableCategories={availableCategories}
             onClearFilters={clearFilters}
+            renderSortIcon={renderSortIcon}
           />
         </div>
 
@@ -140,222 +164,245 @@ const Staking: NextPage = () => {
                 setSortOrder={setSortOrder}
                 availableChains={availableChains}
                 availableCategories={availableCategories}
-                onClearFilters={() => {
-                  clearFilters();
-                  setIsFilterOpen(false);
-                }}
+                onClearFilters={clearFilters}
+                renderSortIcon={renderSortIcon}
                 isMobile
               />
             </div>
+            <SheetFooter className="mt-4">
+              <Button onClick={() => setIsFilterOpen(false)}>Apply Filters</Button>
+            </SheetFooter>
           </SheetContent>
         </Sheet>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-        {filteredAndSortedProtocols ? filteredAndSortedProtocols.map(protocol => (
-          <Card
-            key={protocol.idProtocol}
-            className="hover:shadow-lg transition-shadow flex flex-col min-w-[230px]"
-          >
-            <DialogStake
-              open={open}
-              onClose={() => setOpen(false)}
-              addressStaking={typeof protocol === "object" ? protocol?.addressStaking : ""}
-              addressToken={typeof protocol === "object" ? protocol?.addressToken : ""}
-            />
-            <CardHeader className="flex flex-row items-center space-x-4 pb-2 relative">
-              <div className="flex min-w-20 relative -mt-8 sm:-mt-12">
-                <div className="absolute z-0 top-0">
-                  <div className="relative h-8 w-8 sm:h-12 sm:w-12">
-                    {chainLogos.find(chain => chain.name === protocol.chain)?.logo && (
-                      <Image
-                        src={chainLogos.find(chain => chain.name === protocol.chain)?.logo || '/default-logo.png'}
-                        alt={`${protocol.chain} logo`}
-                        fill
-                        className="object-contain"
-                      />
-                    )}
-                  </div>
-                </div>
-                <div className='absolute z-10 left-5 sm:left-7 top-0'>
-                  <div className="relative h-8 w-8 sm:h-12 sm:w-12">
-                    <Image
-                      src={protocol.logo}
-                      alt={`${protocol.nameProject} logo`}
-                      fill
-                      className="object-contain"
-                    />
-                  </div>
-                </div>
-              </div>
-              <div className="flex-grow">
-                <CardTitle className="text-base sm:text-lg">{protocol.nameProject}</CardTitle>
-                <CardDescription className="text-xs sm:text-sm">
-                  {protocol.nameToken} • {protocol.chain}
-                </CardDescription>
-              </div>
-            </CardHeader>
-            <Separator />
-            <CardContent className="pt-4 space-y-3 flex-grow">
-              <div className="flex justify-between items-center">
-                <div>
-                  <p className="text-xs sm:text-sm text-muted-foreground">APY</p>
-                  <p className="font-semibold text-green-600 text-sm sm:text-base">
-                    {protocol.apy}%
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs sm:text-sm text-muted-foreground">TVL</p>
-                  <p className="font-semibold text-sm sm:text-base">
-                    ${(protocol.tvl / 1_000_000).toFixed(1)}M
-                  </p>
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {protocol.categories.map(category => (
-                  <Badge
-                    key={category}
-                    variant="secondary"
-                    className="text-xs"
-                  >
-                    {category}
-                  </Badge>
-                ))}
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-between">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="outline" size="sm" className="text-xs sm:text-sm">
-                      <Info className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" /> Details
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>View Protocol Details</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <Button size="sm" className="text-xs sm:text-sm" onClick={() => setOpen(true)}>Stake Now</Button>
-            </CardFooter>
-          </Card>
-        )) : (
+        {isLoading ? (
           [...Array(6)].map((_, index) => (
-            <Card key={index} className="animate-pulse bg-white/50 flex flex-col min-w-[230px]">
-              <CardHeader className="h-16 rounded-md"></CardHeader>
-              <Separator />
-              <CardContent className="pt-4 space-y-3 flex-grow">
-                <div className="h-6 rounded-md"></div>
-                <div className="h-4 rounded-md w-3/4"></div>
-                <div className="h-4 rounded-md w-1/2"></div>
-              </CardContent>
-              <CardFooter className="flex justify-between">
-                <div className="h-8 rounded-md w-1/3"></div>
-                <div className="h-8 rounded-md w-1/3"></div>
-              </CardFooter>
-            </Card>
-          )))}
+            <SkeletonCard key={index} />
+          ))
+        ) : filteredAndSortedProtocols.length > 0 ? (
+          filteredAndSortedProtocols.map(protocol => (
+            <StakingCard
+              key={protocol.idProtocol}
+              protocol={protocol}
+              getLogoUrl={getLogoUrl}
+            />
+          ))
+        ) : (
+          <div className="col-span-full text-center py-10 text-muted-foreground">
+            No staking protocols found matching your filters.
+            <Button
+              variant="link"
+              onClick={clearFilters}
+              className="block mx-auto mt-2"
+            >
+              Clear all filters
+            </Button>
+          </div>
+        )}
       </div>
-
-      {filteredAndSortedProtocols?.length === 0 && (
-        <div className="text-center py-10 text-muted-foreground">
-          No staking protocols found matching your filters.
-        </div>
-      )}
     </div>
   );
 };
 
-const FilterSection = ({
-  search,
-  setSearch,
-  chainFilter,
-  setChainFilter,
-  categoryFilter,
-  setCategoryFilter,
-  sortBy,
-  setSortBy,
-  sortOrder,
-  setSortOrder,
-  availableChains,
-  availableCategories,
-  onClearFilters,
-  isMobile = false
-}) => {
+const StakingCard = ({ protocol, getLogoUrl }) => {
+  const toast = useToast();
+  const [amount, setAmount] = useState("");
+  const { mutation } = useStake();
+  const { balance, loading, error, refresh } = useBalance({
+    chainName: protocol.chain
+  });
+
+
+  const handleStake = async () => {
+    if (!amount || Number(amount) <= 0 || balance === null || balance < amount) {
+      toast({
+        title: "Invalid Amount",
+        description: "Please enter a valid amount to stake.",
+        status: "error"
+      });
+      return;
+    }
+
+    try {
+      await mutation.mutateAsync(
+        {
+          addressStaking: protocol.addressStaking,
+          amount: amount,
+          decimals: 18
+        },
+        {
+          onSuccess: () => {
+            toast({
+              title: "Staking Successful",
+              description: `You have staked ${amount} ETH on ${protocol.chain}.`,
+              status: "success"
+            });
+
+            setTimeout(() => {
+              refresh();
+            }, 2000);
+          },
+          onError: (error) => {
+            toast({
+              title: "Staking Error",
+              description: `Error: ${error.message}`,
+              status: "error"
+            });
+          }
+        }
+      );
+    } catch (error) {
+      toast({
+        title: "Staking Error",
+        description: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        status: "error"
+      });
+    }
+  };
+
   return (
-    <div className={`flex md:flex-row flex-col ${isMobile ? 'space-y-4' : 'flex-row gap-4 items-center flex-wrap'}`}>
-      <div className="relative flex-grow max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={20} />
+    <Card
+      key={protocol.idProtocol}
+      className="hover:shadow-lg transition-shadow flex flex-col min-w-[230px] relative group"
+    >
+      <CardHeader className="flex flex-row items-center space-x-4 pb-2">
+        <div className="flex min-w-20 relative -mt-8 sm:-mt-12">
+          <div className="absolute z-0 top-0">
+            <div className="relative h-8 w-8 sm:h-12 sm:w-12">
+              <Image
+                src={getLogoUrl(protocol.chain)}
+                alt={`${protocol.chain} logo`}
+                fill
+                className="object-contain rounded-full"
+              />
+            </div>
+          </div>
+          <div className='absolute z-10 left-5 sm:left-7 top-0'>
+            <div className="relative h-8 w-8 sm:h-12 sm:w-12">
+              <Image
+                src={protocol.logo}
+                alt={`${protocol.nameProject} logo`}
+                fill
+                className="object-contain rounded-full"
+              />
+            </div>
+          </div>
+        </div>
+        <div className="flex-grow">
+          <CardTitle className="text-base sm:text-lg">{protocol.nameProject}</CardTitle>
+          <CardDescription className="text-xs sm:text-sm">
+            {protocol.nameToken} • {protocol.chain}
+          </CardDescription>
+        </div>
+      </CardHeader>
+      <Separator />
+      <CardContent className="pt-4 space-y-3 flex-grow">
+        <div className="flex justify-between items-center">
+          <div>
+            <p className="text-xs sm:text-sm text-muted-foreground">APY</p>
+            <p className="font-semibold text-green-600 text-sm sm:text-base">
+              {protocol.apy.toFixed(2)}%
+            </p>
+          </div>
+          <div>
+            <p className="text-xs sm:text-sm text-muted-foreground">TVL</p>
+            <p className="font-semibold text-sm sm:text-base">
+              ${(protocol.tvl / 1_000_000).toFixed(1)}M
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2 mt-2">
+          {protocol.categories.map(category => (
+            <Badge
+              key={category}
+              variant="secondary"
+              className="text-xs"
+            >
+              {category}
+            </Badge>
+          ))}
+        </div>
+      </CardContent>
+      <CardFooter className='flex flex-col gap-3'>
+        <div className="w-full flex justify-between items-center">
+          <Label className="block">
+            Balance: {loading ? "Loading..." : error ? "Error loading balance" : balance ? `${parseFloat(balance).toFixed(6)} ETH` : "0 ETH"}
+          </Label>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={refresh}
+            disabled={loading}
+          >
+            <RefreshCcw className='w-5 h-5' />
+          </Button>
+        </div>
         <Input
-          placeholder="Search protocols, tokens..."
-          className="pl-10"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          id="amount"
+          type="number"
+          placeholder="0.00"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          className="mt-1"
         />
-      </div>
-
-      <Select
-        value={chainFilter}
-        onValueChange={setChainFilter}
-      >
-        <SelectTrigger className="w-full sm:w-[180px]">
-          <SelectValue placeholder="All Chains" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All Chains</SelectItem>
-          {availableChains.map(chain => (
-            <SelectItem key={chain} value={chain}>{chain}</SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-
-      <Select
-        value={categoryFilter}
-        onValueChange={setCategoryFilter}
-      >
-        <SelectTrigger className="w-full sm:w-[180px]">
-          <SelectValue placeholder="All Categories" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All Categories</SelectItem>
-          {availableCategories.map(category => (
-            <SelectItem key={category} value={category}>{category}</SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-
-      <div className="flex items-center gap-2">
-        <Select
-          value={sortBy}
-          onValueChange={(value: 'apy' | 'tvl') => setSortBy(value)}
-        >
-          <SelectTrigger className="w-full sm:w-[120px]">
-            <SelectValue placeholder="Sort By" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="apy">APY</SelectItem>
-            <SelectItem value="tvl">TVL</SelectItem>
-          </SelectContent>
-        </Select>
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc')}
-        >
-          <ArrowUpDown className={`h-4 w-4 text-black ${sortOrder === 'desc' ? 'rotate-180' : ''}`} />
-        </Button>
-      </div>
-
-      <Button
-        variant="destructive"
-        size="sm"
-        onClick={onClearFilters}
-        className="flex items-center gap-2"
-      >
-        <X className="h-4 w-4" /> Clear Filters
-      </Button>
-    </div>
+        <div className="flex w-full justify-between">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="sm" className="text-xs sm:text-sm">
+                  <Info className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" /> Details
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>View Protocol Details</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          <Button size="sm" className="text-xs sm:text-sm" onClick={handleStake} disabled={!balance || balance < amount}>
+            Stake Now
+          </Button>
+        </div>
+      </CardFooter>
+    </Card>
   );
 };
+
+const SkeletonCard = () => (
+  <Card className="flex flex-col min-w-[230px]">
+    <CardHeader className="flex flex-row items-center space-x-4 pb-2">
+      <div className="flex min-w-20 relative -mt-8 sm:-mt-12">
+        <Skeleton className="h-8 w-8 sm:h-12 sm:w-12 rounded-full" />
+        <Skeleton className="h-8 w-8 sm:h-12 sm:w-12 rounded-full absolute left-5 sm:left-7" />
+      </div>
+      <div className="flex-grow">
+        <Skeleton className="h-6 w-24 mb-2" />
+        <Skeleton className="h-4 w-32" />
+      </div>
+    </CardHeader>
+    <Separator />
+    <CardContent className="pt-4 space-y-3 flex-grow">
+      <div className="flex justify-between items-center">
+        <div>
+          <Skeleton className="h-4 w-8 mb-2" />
+          <Skeleton className="h-5 w-16" />
+        </div>
+        <div>
+          <Skeleton className="h-4 w-8 mb-2" />
+          <Skeleton className="h-5 w-16" />
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-2 mt-2">
+        <Skeleton className="h-6 w-16 rounded-full" />
+        <Skeleton className="h-6 w-20 rounded-full" />
+      </div>
+    </CardContent>
+    <CardFooter className="flex justify-between">
+      <Skeleton className="h-8 w-20" />
+      <Skeleton className="h-8 w-24" />
+    </CardFooter>
+  </Card>
+);
 
 export default Staking;

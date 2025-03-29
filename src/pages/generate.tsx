@@ -168,7 +168,7 @@ const Generate: NextPage = () => {
         open={open} 
         onClose={() => setOpen(false)} 
         addressStaking={typeof staking === "object" ? staking?.addressStaking : ""}
-        addressToken={typeof staking === "object" ? staking?.addressToken : ""}
+        chain={typeof staking === "object" ? staking?.chain : ""}
       />
       <div className="container mx-auto max-w-2xl py-10 px-4">
         {!idProtocolSaved ? (

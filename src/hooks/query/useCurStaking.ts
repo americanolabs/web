@@ -20,7 +20,7 @@ export const useCurStaking = ({
 }) => {
   const { address } = useAccount();
 
-  const { data, isLoading: csLoading }: { data: [bigint, bigint, bigint, boolean] | undefined, isLoading: boolean } = useReadContract({
+  const { data, isLoading: csLoading }: { data: [bigint, bigint, bigint] | undefined, isLoading: boolean } = useReadContract({
     address: addressProtocol,
     abi: MockStakingABI,
     functionName: "stakes",
@@ -31,8 +31,7 @@ export const useCurStaking = ({
     ? {
         amountStaked: normalize(Number(data[0]), DECIMALS_MOCK_TOKEN),
         numberOfDays: Number(data[1]),
-        registrationTimestamp: Number(data[2]),
-        isValid: Boolean(data[3]),
+        registrationTimestamp: Number(data[2])
       }
     : undefined;
 
