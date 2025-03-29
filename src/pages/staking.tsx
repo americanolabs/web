@@ -41,6 +41,8 @@ import { FilterSection } from '@/components/filter/filter-staking';
 import { useStake } from '@/hooks/mutation/useStake';
 import { useToast } from '@chakra-ui/react';
 import { Input } from '@/components/ui/input';
+import { useCurStaking } from '@/hooks/query/useCurStaking';
+import { useWithdraw } from '@/hooks/mutation/useWithdraw';
 
 const chainLogos = [
   { name: 'Arbitrum Sepolia', logo: '/chains/arbitrum-logo.png' },
@@ -213,7 +215,10 @@ const StakingCard = ({ protocol, getLogoUrl }) => {
   const { balance, loading, error, refresh } = useBalance({
     chainName: protocol.chain
   });
-
+  const { cStaking } = useCurStaking({
+    addressProtocol: protocol.addressStaking
+  });
+  const { mutation: withdrawMutation } = useWithdraw();
 
   const handleStake = async () => {
     if (!amount || Number(amount) <= 0 || balance === null || balance < amount) {
@@ -257,6 +262,48 @@ const StakingCard = ({ protocol, getLogoUrl }) => {
     } catch (error) {
       toast({
         title: "Staking Error",
+        description: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        status: "error"
+      });
+    }
+  };
+
+  const handleWithdraw = async () => {
+    if (!cStaking || !('amountStaked' in cStaking) || !cStaking.amountStaked) {
+      toast({
+        title: "No Staking Found",
+        description: "You have no staked amount to withdraw.",
+        status: "error"
+      });
+      return;
+    }
+    try {
+      await withdrawMutation.mutateAsync(
+        {
+          addressStaking: protocol.addressStaking,
+          chain: protocol.chain
+        },
+        {
+          onSuccess: () => {
+            toast({
+              title: "Withdrawal Successful",
+              description: `You have withdrawn ${"amountStaked" in cStaking ? cStaking.amountStaked : 0} ETH from ${protocol.chain}.`,
+              status: "success"
+            });
+            refresh();
+          },
+          onError: (error) => {
+            toast({
+              title: "Withdrawal Error",
+              description: `Error: ${error.message}`,
+              status: "error"
+            });
+          }
+        }
+      );
+    } catch (error) {
+      toast({
+        title: "Withdrawal Error",
         description: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
         status: "error"
       });
@@ -340,6 +387,16 @@ const StakingCard = ({ protocol, getLogoUrl }) => {
             <RefreshCcw className='w-5 h-5' />
           </Button>
         </div>
+        <div className="w-full flex justify-between items-center">
+          <Label className='block'>
+            Amount Staked: {cStaking && "amountStaked" in cStaking ? `${cStaking.amountStaked} ETH` : "0 ETH"}
+          </Label>
+        </div>
+        {cStaking && "amountStaked" in cStaking && cStaking.amountStaked > 0 && (
+          <Button size="sm" className="text-xs sm:text-sm w-full" onClick={handleWithdraw}>
+            Unstake All
+          </Button>
+        )}
         <Input
           id="amount"
           type="number"

@@ -1,14 +1,12 @@
-import { MockStakingABI } from "@/lib/abis/StakingABI";
+import { StakingABI } from "@/lib/abis/StakingABI";
 import { useAccount, useReadContract } from "wagmi";
 import { z } from "zod";
 import { normalize } from "@/lib/bignumber";
-import { DECIMALS_MOCK_TOKEN } from "@/lib/constants";
 
 export const StakingSchema = z.object({
-  amountStaked: z.bigint(),
-  numberOfDays: z.bigint(),
-  registrationTimestamp: z.bigint(),
-  isValid: z.boolean(),
+  amountStaked: z.number(),
+  numberOfDays: z.number(),
+  registrationTimestamp: z.number(),
 });
 
 export type Staking = z.infer<typeof StakingSchema>;
@@ -21,15 +19,22 @@ export const useCurStaking = ({
   const { address } = useAccount();
 
   const { data, isLoading: csLoading }: { data: [bigint, bigint, bigint] | undefined, isLoading: boolean } = useReadContract({
-    address: addressProtocol,
-    abi: MockStakingABI,
-    functionName: "stakes",
-    args: [address],
+    address: address && addressProtocol,
+    abi: StakingABI,
+    functionName: address ? "stakes" : undefined,
+    args: address ? [address] : undefined,
   });
+
+  if (!address) {
+    return {
+      cStaking: {},
+      csLoading: false,
+    };
+  }
 
   const formattedData = data
     ? {
-        amountStaked: normalize(Number(data[0]), DECIMALS_MOCK_TOKEN),
+        amountStaked: Number(normalize(Number(data[0]), 18)),
         numberOfDays: Number(data[1]),
         registrationTimestamp: Number(data[2])
       }

@@ -10,10 +10,6 @@ import {
 } from "wagmi/actions";
 import { useSwitchChain } from "wagmi";
 
-// Define HexAddress type that was missing
-type HexAddress = `0x${string}`;
-
-// Improved chain metadata with proper typing
 interface ChainMetadata {
   id: number;
   name: string;
@@ -112,7 +108,6 @@ export const useStake = () => {
       decimals
     }: StakeParams) => {
       try {
-        // Reset steps and txHash at the beginning
         setSteps([{ step: 1, status: "idle" }]);
         setTxHash(null);
 
@@ -120,44 +115,36 @@ export const useStake = () => {
           throw new Error("Invalid parameters or wallet not connected");
         }
 
-        // Update step to loading
         setSteps([{ step: 1, status: "loading" }]);
 
         const dAmount = denormalize(amount, decimals);
 
-        // Find the matching chain configuration
         const findChain = CHAIN_METADATA.find((chainMeta) => chainMeta.name === chain);
 
         if (!findChain) {
           throw new Error(`Unsupported chain: ${chain}`);
         }
 
-        // Get current wallet client
         let client = walletClient;
         if (!client) {
           throw new Error("Wallet client not available");
         }
 
-        // Check and switch chain if necessary
         const currentChainId = await client.getChainId();
 
         if (currentChainId !== findChain.id) {
           logger.info(`Switching from chain ${currentChainId} to ${findChain.id}`);
           try {
-            // Wait for the chain to be switched
             await switchChain({ chainId: findChain.id });
 
-            // Important: Refetch the wallet client to get a fresh instance for the new chain
             const { data: updatedClient } = await refetchWalletClient();
 
             if (!updatedClient) {
               throw new Error("Failed to get updated wallet client after chain switch");
             }
 
-            // Update our client reference
             client = updatedClient;
 
-            // Verify the chain was actually switched
             const newChainId = await client.getChainId();
             if (newChainId !== findChain.id) {
               throw new Error(`Failed to switch to chain ${findChain.name}`);
@@ -170,7 +157,6 @@ export const useStake = () => {
           }
         }
 
-        // Execute the staking transaction with the current (possibly updated) client
         const hash = await client.writeContract({
           address: addressStaking,
           abi: StakingABI,
@@ -186,12 +172,10 @@ export const useStake = () => {
           throw new Error("Transaction failed to submit");
         }
 
-        // Update txHash state with the transaction hash
         setTxHash(hash);
 
         logger.info(`Transaction submitted with hash: ${hash}`);
 
-        // Wait for transaction receipt
         const receipt = await waitForTransactionReceipt(
           wagmiConfig,
           {
@@ -199,7 +183,6 @@ export const useStake = () => {
           }
         );
 
-        // Update steps to success
         setSteps([{ step: 1, status: "success" }]);
 
         return receipt;
@@ -208,7 +191,6 @@ export const useStake = () => {
         const error = e as Error;
         const errorMessage = error.message;
 
-        // Don't show errors for user rejections, but log them
         if (
           errorMessage.includes("User rejected") ||
           errorMessage.includes("User denied") ||
@@ -221,7 +203,6 @@ export const useStake = () => {
 
         logger.error("Staking error:", error);
 
-        // Update step status to error
         setSteps([{ step: 1, status: "error", error: errorMessage }]);
 
         throw error;
