@@ -18,7 +18,7 @@ const footerLinks: FooterLink[] = [
   { title: 'Generate', url: "/generate", external: false },
   { title: 'Bridge', url: "/bridge", external: false },
   { title: 'Staking', url: "/staking", external: false },
-  { title: 'Docs', url: links.github, external: true, icon: <BookText color="#fff" className='w-5 h-5' /> },
+  { title: 'Docs', url: links.docs, external: true, icon: <BookText color="#fff" className='w-5 h-5' /> },
   { title: 'Github', url: links.github, external: true, icon: <GithubIcon color="#fff" className='w-5 h-5' /> },
 ];
 
