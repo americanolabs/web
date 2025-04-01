@@ -36,7 +36,7 @@ export const chains: ChainMap<ChainMetadata & { mailbox?: Address }> = {
     nativeToken: { name: 'Ether', symbol: 'ETH', decimals: 18 },
     name: 'decaftestnet',
     displayName: 'Decaf Testnet',
-    mailbox: "0xD95d2F7C38bfA2f9d7A618474Bc619470f01001F",
+    mailbox: "0xCdBD0aC35aae8f46ebC1D119350E407dE2699d55",
     rpcUrls: [{
       http: 'https://americano-rollup-v1.comingdotsoon.xyz'
     }],

@@ -1,7 +1,7 @@
 import { TokenStandard, type WarpCoreConfig } from '@hyperlane-xyz/sdk';
 import { zeroAddress } from 'viem';
 
-const ROUTER = '0xD22A20bD7A2E2f174E69ac053e546a48aC98d2Bd';
+const ROUTER = '0x512097Cb649F5222591060E7644688b944480597';
 
 const NETWORK_SEPARATOR = '101010';
 
@@ -85,7 +85,7 @@ export const warpRouteConfigs: WarpCoreConfig = {
         origin: ['arbitrumsepolia', 'basesepolia', 'decaftestnet'].join(
           NETWORK_SEPARATOR,
         ),
-        destination: ['basesepolia', 'basesepolia', 'decaftestnet'].join(NETWORK_SEPARATOR),
+        destination: ['arbitrumsepolia', 'basesepolia', 'decaftestnet'].join(NETWORK_SEPARATOR),
         addressOrDenom: zeroAddress,
       }
     ],
